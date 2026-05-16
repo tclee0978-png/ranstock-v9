@@ -25,22 +25,22 @@
       const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1m&range=1d`);
       const json = await res.json();
       const meta = json.chart.result[0].meta;
-      const price = meta.regularMarketPrice || meta.previousClose;
+      const price = meta.regularMarketPrice || meta.previousClose || 0;
 
       results.push({
         code: p.code,
-        name: p.code, // 之後可再補中文名
-        price: price,
-        open: meta.chartPreviousClose || price,
-        high: meta.high || price,
-        low: meta.low || price,
-        prev: meta.previousClose || price,
+        name: p.code,           // 之後可再補中文
+        price: parseFloat(price),
+        open: parseFloat(meta.chartPreviousClose || price),
+        high: parseFloat(meta.high || price),
+        low: parseFloat(meta.low || price),
+        prev: parseFloat(meta.previousClose || price),
         vol: 0,
         time: new Date().toISOString(),
         liveSource: "LIVE"
       });
     } catch (e) {
-      console.warn("Yahoo failed for", p.code);
+      console.warn("Yahoo fetch failed:", p.code);
     }
   }
   return results;
