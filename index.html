@@ -2,49 +2,102 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>Ranstock 測試版</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranstock 狙擊手 · 手機版</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
-  body { margin:0; background:#0a0e14; color:#ddd; font-family:"Noto Sans TC",sans-serif; }
-  .header { background:#121821; padding:15px; text-align:center; font-size:18px; font-weight:700; }
+  :root { --up:#ff2d3d; --down:#00d96b; --signal:#c6ff5a; --f1:#ffb020; }
+  body { margin:0; padding:0; background:#0a0e14; color:#ddd; font-family:"Noto Sans TC",sans-serif; font-size:15px; }
+  .header { background:#121821; padding:15px; text-align:center; font-size:19px; font-weight:700; color:#c6ff5a; position:sticky; top:0; z-index:10; }
+  input { width:100%; padding:14px; font-size:17px; background:#1e2838; border:0; color:white; box-sizing:border-box; }
   table { width:100%; border-collapse:collapse; }
-  td, th { padding:12px 8px; border-bottom:1px solid #333; }
-  .up { color:#ff2d3d; } .down { color:#00d96b; }
+  td, th { padding:12px 8px; border-bottom:1px solid #232c3a; }
+  .up { color:var(--up); } .down { color:var(--down); }
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,0.95); display:none; align-items:center; justify-content:center; z-index:100; }
+  .modal-content { background:#121821; width:94%; max-width:460px; border-radius:12px; max-height:90vh; overflow:auto; }
+  .f4 { background:linear-gradient(90deg, rgba(198,255,90,0.15), transparent); }
 </style>
 </head>
 <body>
-<div class="header">Ranstock 狙擊手紀律系統 - 測試版</div>
 
-<input id="search" placeholder="輸入代碼 如 2401 2330" style="width:100%;padding:12px;font-size:16px;">
+<div class="header">Ranstock 狙擊手紀律系統</div>
+<input id="search" placeholder="輸入代碼或名稱 (2401、凌陽、2330)" />
 
-<table id="list"><thead><tr><th>代碼</th><th>名稱</th><th>現價</th><th>漲幅</th></tr></thead><tbody></tbody></table>
+<div id="list"></div>
+
+<!-- 健診 Modal -->
+<div id="modal" class="modal">
+  <div class="modal-content" id="modal-content"></div>
+</div>
 
 <script>
-// 測試資料
+// ==================== 你的核心資料 ====================
 const stocks = [
-  {code:"2401",name:"凌陽",price:142.8,prev:139.5},
-  {code:"3601",name:"智晶半導體",price:78.68,prev:76.9},
-  {code:"2330",name:"台積電",price:2270,prev:2220},
-  {code:"3030",name:"德律",price:68.5,prev:67.8}
+  {code:"2401",name:"凌陽",price:142.8,prev:139.5,vol:24830,f1:true,f2:true,f3:true,f4:true,ma5Bias:2.1,otcRS:1.85,industry:"半導體",boxHi:145,boxLo:135},
+  {code:"3601",name:"智晶半導體",price:78.68,prev:76.9,vol:18402,f1:true,f2:true,f3:true,f4:true,ma5Bias:1.9,otcRS:1.62,industry:"半導體",boxHi:80,boxLo:74},
+  {code:"2330",name:"台積電",price:2270,prev:2220,vol:31691,f1:true,f2:true,f3:true,f4:false,ma5Bias:2.8,otcRS:1.92,industry:"半導體",boxHi:2300,boxLo:2180},
+  {code:"3030",name:"德律",price:68.5,prev:67.8,vol:1240,f1:true,f2:false,f3:true,f4:false,ma5Bias:1.2,otcRS:1.45,industry:"儀器",boxHi:70,boxLo:65},
+  {code:"2454",name:"聯發科",price:3405,prev:3380,vol:8420,f1:false,f2:true,f3:true,f4:false,ma5Bias:-1.8,otcRS:0.95,industry:"IC設計",boxHi:3450,boxLo:3320}
 ];
 
-function render() {
-  let html = '';
-  stocks.forEach(s => {
+function renderList(filtered) {
+  let html = `<table><thead><tr><th>代碼</th><th>名稱</th><th>現價</th><th>漲幅</th><th>濾鏡</th></tr></thead><tbody>`;
+  filtered.forEach(s => {
     const chg = ((s.price - s.prev)/s.prev*100).toFixed(2);
-    html += `<tr><td>${s.code}</td><td>${s.name}</td><td>${s.price}</td><td class="${chg>0?'up':'down'}">${chg>0?'▲':''}${chg}%</td></tr>`;
+    const f4 = s.f4 ? '🚀' : '';
+    html += `<tr onclick="showHealth('${s.code}')" class="${s.f4?'f4':''}">
+      <td>${s.code}</td>
+      <td>${s.name}</td>
+      <td class="mono">${s.price}</td>
+      <td class="${chg>0?'up':'down'}">${chg>0?'▲':''}${chg}%</td>
+      <td>${s.f1?'✓':''}${s.f2?'✓':''}${s.f3?'✓':''} ${f4}</td>
+    </tr>`;
   });
-  document.querySelector('#list tbody').innerHTML = html;
+  html += `</tbody></table>`;
+  document.getElementById('list').innerHTML = html;
 }
-render();
 
 document.getElementById('search').addEventListener('input', e => {
-  const q = e.target.value.toUpperCase();
-  // 簡易過濾
-  const filtered = stocks.filter(s => s.code.includes(q) || s.name.includes(q));
-  // 這裡可再擴充...
-  render();
+  const q = e.target.value.toUpperCase().trim();
+  const filtered = q ? stocks.filter(s => s.code.includes(q) || s.name.includes(q)) : stocks;
+  renderList(filtered);
 });
+
+renderList(stocks); // 預設顯示
+
+// ==================== 個股健診 ====================
+function showHealth(code) {
+  const s = stocks.find(x => x.code === code);
+  if (!s) return;
+
+  const chg = ((s.price - s.prev)/s.prev*100).toFixed(2);
+  let html = `
+    <div style="padding:20px;">
+      <h2>${s.code} ${s.name}</h2>
+      <div style="font-size:32px; font-weight:700; color:${chg>0?'#ff2d3d':'#00d96b'}">${s.price} <span style="font-size:18px;">${chg>0?'▲':''}${chg}%</span></div>
+      
+      <div style="margin:20px 0; display:flex; gap:8px; flex-wrap:wrap;">
+        <span class="tag" style="background:${s.f1?'#ffb020':'#333'}">F1 抗跌 ${s.f1?'✓':''}</span>
+        <span class="tag" style="background:${s.f2?'#5ad7ff':'#333'}">F2 箱型 ${s.f2?'✓':''}</span>
+        <span class="tag" style="background:${s.f3?'#ff5252':'#333'}">F3 防線 ${s.f3?'✓':''}</span>
+        <span class="tag" style="background:${s.f4?'#c6ff5a':'#333'}">F4 上車 ${s.f4?'🚀':''}</span>
+      </div>
+
+      <div style="background:#1e2838; padding:15px; border-radius:8px; margin:20px 0;">
+        <strong>我爸最愛技術總結：</strong><br>
+        ${s.f2 ? '已突破箱型，進入起漲段，目標價約 ' + (s.boxHi + 8) : '尚未突破箱型，等待放量確認'}
+      </div>
+
+      <button onclick="closeModal()" style="width:100%; padding:14px; background:#c6ff5a; color:#000; border:0; border-radius:8px; font-size:16px; font-weight:700;">關閉</button>
+    </div>
+  `;
+
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+}
 </script>
 </body>
 </html>
