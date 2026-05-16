@@ -5,22 +5,23 @@
 <title>Ranstock 狙擊手 · 手機版</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
-  :root { --up:#ff2d3d; --down:#00d96b; --signal:#c6ff5a; --f1:#ffb020; }
-  body { margin:0; padding:0; background:#0a0e14; color:#ddd; font-family:"Noto Sans TC",sans-serif; font-size:15px; }
-  .header { background:#121821; padding:15px; text-align:center; font-size:19px; font-weight:700; color:#c6ff5a; position:sticky; top:0; z-index:10; }
-  input { width:100%; padding:14px; font-size:17px; background:#1e2838; border:0; color:white; box-sizing:border-box; }
+  :root { --up:#ff2d3d; --down:#00d96b; --signal:#c6ff5a; --f1:#ffb020; --box:#5ad7ff; }
+  body { margin:0; padding:0; background:#0a0e14; color:#ddd; font-family:"Noto Sans TC",sans-serif; font-size:15.5px; line-height:1.5; }
+  .header { background:#121821; padding:16px; text-align:center; font-size:19px; font-weight:700; color:#c6ff5a; position:sticky; top:0; z-index:10; border-bottom:1px solid #232c3a; }
+  input { width:100%; padding:15px; font-size:17px; background:#1e2838; border:0; color:white; box-sizing:border-box; }
   table { width:100%; border-collapse:collapse; }
-  td, th { padding:12px 8px; border-bottom:1px solid #232c3a; }
-  .up { color:var(--up); } .down { color:var(--down); }
+  td, th { padding:14px 8px; border-bottom:1px solid #232c3a; }
+  .up { color:var(--up); font-weight:700; } .down { color:var(--down); }
+  .f4 { background:linear-gradient(90deg, rgba(198,255,90,0.12), transparent); }
   .modal { position:fixed; inset:0; background:rgba(0,0,0,0.95); display:none; align-items:center; justify-content:center; z-index:100; }
-  .modal-content { background:#121821; width:94%; max-width:460px; border-radius:12px; max-height:90vh; overflow:auto; }
-  .f4 { background:linear-gradient(90deg, rgba(198,255,90,0.15), transparent); }
+  .modal-content { background:#121821; width:94%; max-width:460px; border-radius:12px; max-height:92vh; overflow:auto; padding:20px; }
+  .tag { padding:4px 8px; border-radius:4px; font-size:12px; margin-right:4px; }
 </style>
 </head>
 <body>
 
 <div class="header">Ranstock 狙擊手紀律系統</div>
-<input id="search" placeholder="輸入代碼或名稱 (2401、凌陽、2330)" />
+<input id="search" placeholder="輸入代碼或名稱 (2401、凌陽、2330)" style="margin:10px 0;">
 
 <div id="list"></div>
 
@@ -30,7 +31,7 @@
 </div>
 
 <script>
-// ==================== 你的核心資料 ====================
+// ==================== 核心資料 + 濾鏡 ====================
 const stocks = [
   {code:"2401",name:"凌陽",price:142.8,prev:139.5,vol:24830,f1:true,f2:true,f3:true,f4:true,ma5Bias:2.1,otcRS:1.85,industry:"半導體",boxHi:145,boxLo:135},
   {code:"3601",name:"智晶半導體",price:78.68,prev:76.9,vol:18402,f1:true,f2:true,f3:true,f4:true,ma5Bias:1.9,otcRS:1.62,industry:"半導體",boxHi:80,boxLo:74},
@@ -47,7 +48,7 @@ function renderList(filtered) {
     html += `<tr onclick="showHealth('${s.code}')" class="${s.f4?'f4':''}">
       <td>${s.code}</td>
       <td>${s.name}</td>
-      <td class="mono">${s.price}</td>
+      <td>${s.price}</td>
       <td class="${chg>0?'up':'down'}">${chg>0?'▲':''}${chg}%</td>
       <td>${s.f1?'✓':''}${s.f2?'✓':''}${s.f3?'✓':''} ${f4}</td>
     </tr>`;
@@ -62,33 +63,31 @@ document.getElementById('search').addEventListener('input', e => {
   renderList(filtered);
 });
 
-renderList(stocks); // 預設顯示
+renderList(stocks);
 
-// ==================== 個股健診 ====================
+// ==================== 個股健診（含 K線描述 + 你爸白話總結） ====================
 function showHealth(code) {
   const s = stocks.find(x => x.code === code);
   if (!s) return;
 
   const chg = ((s.price - s.prev)/s.prev*100).toFixed(2);
   let html = `
-    <div style="padding:20px;">
-      <h2>${s.code} ${s.name}</h2>
-      <div style="font-size:32px; font-weight:700; color:${chg>0?'#ff2d3d':'#00d96b'}">${s.price} <span style="font-size:18px;">${chg>0?'▲':''}${chg}%</span></div>
-      
-      <div style="margin:20px 0; display:flex; gap:8px; flex-wrap:wrap;">
-        <span class="tag" style="background:${s.f1?'#ffb020':'#333'}">F1 抗跌 ${s.f1?'✓':''}</span>
-        <span class="tag" style="background:${s.f2?'#5ad7ff':'#333'}">F2 箱型 ${s.f2?'✓':''}</span>
-        <span class="tag" style="background:${s.f3?'#ff5252':'#333'}">F3 防線 ${s.f3?'✓':''}</span>
-        <span class="tag" style="background:${s.f4?'#c6ff5a':'#333'}">F4 上車 ${s.f4?'🚀':''}</span>
-      </div>
-
-      <div style="background:#1e2838; padding:15px; border-radius:8px; margin:20px 0;">
-        <strong>我爸最愛技術總結：</strong><br>
-        ${s.f2 ? '已突破箱型，進入起漲段，目標價約 ' + (s.boxHi + 8) : '尚未突破箱型，等待放量確認'}
-      </div>
-
-      <button onclick="closeModal()" style="width:100%; padding:14px; background:#c6ff5a; color:#000; border:0; border-radius:8px; font-size:16px; font-weight:700;">關閉</button>
+    <h2 style="margin:0 0 12px;">${s.code} ${s.name}</h2>
+    <div style="font-size:32px;font-weight:700;color:${chg>0?'#ff2d3d':'#00d96b'}">${s.price} <span style="font-size:18px;">${chg>0?'▲':''}${chg}%</span></div>
+    
+    <div style="margin:20px 0;display:flex;gap:6px;flex-wrap:wrap;">
+      <span class="tag" style="background:${s.f1?'#ffb020':'#333'}">抗跌 ${s.f1?'✓':''}</span>
+      <span class="tag" style="background:${s.f2?'#5ad7ff':'#333'}">箱型 ${s.f2?'✓':''}</span>
+      <span class="tag" style="background:${s.f3?'#ff5252':'#333'}">防線 ${s.f3?'✓':''}</span>
+      <span class="tag" style="background:${s.f4?'#c6ff5a':'#333'}">上車 ${s.f4?'🚀':''}</span>
     </div>
+
+    <div style="background:#1e2838;padding:16px;border-radius:8px;margin:20px 0;">
+      <strong>我爸最愛技術總結：</strong><br>
+      ${s.f2 ? `已形成箱型突破，進入<strong style="color:#c6ff5a">起漲段</strong>，目標價約 ${Math.round(s.boxHi + 8)} 元` : '尚未突破箱型，等待放量確認'}
+    </div>
+
+    <button onclick="closeModal()" style="width:100%;padding:16px;background:#c6ff5a;color:#000;border:0;border-radius:8px;font-size:17px;font-weight:700;">關閉</button>
   `;
 
   document.getElementById('modal-content').innerHTML = html;
