@@ -5,13 +5,18 @@
 window.MARKET_DATA = (function () {
 
   // OTC 櫃買指數參考 (大盤跌)
-  const indices = [
-    { code: "TWSE", name: "加權指數", value: 21684.32, change: -185.44, pct: -0.85, vol: 3284 },
-    { code: "OTC", name: "櫃買指數", value: 248.71, change: -2.84, pct: -1.13, vol: 1042 },
-    { code: "SEMI", name: "半導體", value: 712.40, change: -8.21, pct: -1.14, vol: 1820 },
-    { code: "FIN", name: "金融指數", value: 1942.50, change: 3.10, pct: 0.16, vol: 312 },
-  ];
-
+  const REAL_STOCKS = [
+  ["2401","凌陽","半導體","TWSE"],
+  ["3601","智晶半導體","半導體","TWSE"],
+  ["3711","元昇科技","電子零組件","TWSE"],
+  ["3030","德律","儀器","TPEx"],
+  ["2330","台積電","半導體","TWSE"],
+  ["2454","聯發科","IC設計","TWSE"],
+  ["2603","長榮","航運","TWSE"],
+  ["2317","鴻海","電子","TWSE"],
+  ["2882","國泰金","金融","TWSE"],
+  // 你可以再繼續加
+];
   // 個股母清單
   // V6 LIVE CLEAN：不再內建任何假股票名稱。
   // 股票代號與名稱先由 REAL_STOCKS 提供「待抓取清單」，LIVE 模式成功後一律用 TWSE MIS 回傳 c/n 覆蓋。
