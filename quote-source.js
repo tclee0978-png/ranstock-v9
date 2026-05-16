@@ -18,32 +18,33 @@
   // ----- Live snapshot via Worker (TWSE MIS) -----
   // pairs: [{ code: "2330", market: "TWSE" }, { code: "6547", market: "TPEx" }]
   async function fetchLiveBatch(pairs) {
-    if (!pairs || pairs.length === 0) return [];
-    const targets = pairs.map(p =>
-      (p.market === "TPEx" ? "otc_" : "tse_") + p.code + ".tw"
-    ).join("|");
-    const url = `${PROXY_URL}/?ex_ch=${encodeURIComponent(targets)}&_=${Date.now()}`;
-    const r = await fetch(url, { cache: "no-store" });
-    if (!r.ok) throw new Error(`Proxy HTTP ${r.status}`);
-    const data = await r.json();
-    const items = (data.msgArray || []).map(item => ({
-      code: item.c,
-      name: item.n,
-      price: Number(item.z) || (Number(item.pz) || null),  // z=成交價, pz=最後成交
-      open: Number(item.o) || null,
-      high: Number(item.h) || null,
-      low:  Number(item.l) || null,
-      prev: Number(item.y) || null,
-      vol:  Number(item.v) || null,
-      time: item.t || "",
-      askPrices: (item.a || "").split("_").filter(Boolean).map(Number),
-      bidPrices: (item.b || "").split("_").filter(Boolean).map(Number),
-      askSizes:  (item.f || "").split("_").filter(Boolean).map(Number),
-      bidSizes:  (item.g || "").split("_").filter(Boolean).map(Number),
-      source: "twse-mis",
-    }));
-    return items;
+  const results = [];
+  for (const p of pairs) {
+    const symbol = p.market === "TPEx" ? `${p.code}.TWO` : `${p.code}.TW`;
+    try {
+      const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1m&range=1d`);
+      const json = await res.json();
+      const meta = json.chart.result[0].meta;
+      const price = meta.regularMarketPrice || meta.previousClose;
+
+      results.push({
+        code: p.code,
+        name: p.code, // 之後可再補中文名
+        price: price,
+        open: meta.chartPreviousClose || price,
+        high: meta.high || price,
+        low: meta.low || price,
+        prev: meta.previousClose || price,
+        vol: 0,
+        time: new Date().toISOString(),
+        liveSource: "LIVE"
+      });
+    } catch (e) {
+      console.warn("Yahoo failed for", p.code);
+    }
   }
+  return results;
+}
 
   // ----- Live daily K-bars (TWSE OpenAPI STOCK_DAY) -----
   // 透過 Worker 中繼: /?openapi=STOCK_DAY&stockNo=2330
