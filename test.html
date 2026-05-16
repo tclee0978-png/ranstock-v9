@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Ranstock 測試頁</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { margin:0; padding:0; background:#0a0e14; color:#ddd; font-family:"Noto Sans TC",sans-serif; }
+  .header { background:#121821; padding:20px; text-align:center; font-size:20px; font-weight:700; color:#c6ff5a; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; }
+  td, th { padding:14px 8px; text-align:left; border-bottom:1px solid #333; }
+  .up { color:#ff2d3d; font-weight:700; }
+  .down { color:#00d96b; }
+  input { width:100%; padding:15px; font-size:18px; background:#1e2838; border:0; color:white; }
+</style>
+</head>
+<body>
+
+<div class="header">Ranstock 狙擊手 · 簡易測試版</div>
+<input id="search" placeholder="輸入代碼或名稱，例如 2401 或 凌陽" />
+
+<table id="list">
+  <thead><tr><th>代碼</th><th>名稱</th><th>現價</th><th>漲跌</th></tr></thead>
+  <tbody></tbody>
+</table>
+
+<script>
+// 測試資料（已修正正確名稱）
+const stocks = [
+  {code:"2401", name:"凌陽", price:142.8, prev:139.5},
+  {code:"3601", name:"智晶半導體", price:78.68, prev:76.9},
+  {code:"2330", name:"台積電", price:2270, prev:2220},
+  {code:"3030", name:"德律", price:68.5, prev:67.8},
+  {code:"2454", name:"聯發科", price:3405, prev:3380}
+];
+
+function render(filtered) {
+  let html = '';
+  filtered.forEach(s => {
+    const chg = ((s.price - s.prev) / s.prev * 100).toFixed(2);
+    html += `<tr><td>${s.code}</td><td>${s.name}</td><td>${s.price}</td><td class="${chg>0?'up':'down'}">${chg>0?'▲':''}${chg}%</td></tr>`;
+  });
+  document.querySelector('#list tbody').innerHTML = html || '<tr><td colspan="4" style="text-align:center;padding:40px;color:#666">沒有找到符合的股票</td></tr>';
+}
+
+document.getElementById('search').addEventListener('input', e => {
+  const q = e.target.value.trim().toUpperCase();
+  const filtered = q ? stocks.filter(s => s.code.includes(q) || s.name.includes(q)) : stocks;
+  render(filtered);
+});
+
+render(stocks); // 預設顯示
+</script>
+
+</body>
+</html>
