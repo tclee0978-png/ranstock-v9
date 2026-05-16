@@ -1,47 +1,50 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=1400"/>
-<title>Ranstock · 狙擊手紀律系統</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="styles.css"/>
-
-<template id="__bundler_thumbnail">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-    <rect width="100" height="100" fill="#0a0e14"/>
-    <g transform="translate(30,30)">
-      <circle cx="20" cy="20" r="18" fill="none" stroke="#ffb020" stroke-width="3"/>
-      <line x1="20" y1="2"  x2="20" y2="10" stroke="#ffb020" stroke-width="2"/>
-      <line x1="20" y1="30" x2="20" y2="38" stroke="#ffb020" stroke-width="2"/>
-      <line x1="2"  y1="20" x2="10" y2="20" stroke="#ffb020" stroke-width="2"/>
-      <line x1="30" y1="20" x2="38" y2="20" stroke="#ffb020" stroke-width="2"/>
-      <circle cx="20" cy="20" r="3" fill="#ff3a47"/>
-    </g>
-    <text x="50" y="86" font-family="monospace" font-size="9" fill="#5ad7ff" text-anchor="middle" letter-spacing="2">RANSTOCK</text>
-  </svg>
-</template>
+<meta charset="UTF-8">
+<title>Ranstock 測試版</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { margin:0; background:#0a0e14; color:#ddd; font-family:"Noto Sans TC",sans-serif; }
+  .header { background:#121821; padding:15px; text-align:center; font-size:18px; font-weight:700; }
+  table { width:100%; border-collapse:collapse; }
+  td, th { padding:12px 8px; border-bottom:1px solid #333; }
+  .up { color:#ff2d3d; } .down { color:#00d96b; }
+</style>
 </head>
 <body>
-<div id="root"></div>
+<div class="header">Ranstock 狙擊手紀律系統 - 測試版</div>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<input id="search" placeholder="輸入代碼 如 2401 2330" style="width:100%;padding:12px;font-size:16px;">
 
-<script src="data.js"></script>
-<script src="quote-source.js"></script>
-<script type="text/babel" src="tweaks-panel.jsx"></script>
-<script type="text/babel" src="components.jsx"></script>
-<script type="text/babel" src="chart.jsx"></script>
-<script type="text/babel" src="screens-dashboard.jsx"></script>
-<script type="text/babel" src="screens-detail.jsx"></script>
-<script type="text/babel" src="screens-other.jsx"></script>
-<script type="text/babel" src="health-check.jsx"></script>
-<script src="engines.js"></script>
-<script type="text/babel" src="v6-screens.jsx"></script>
-<script type="text/babel" src="app.jsx"></script>
+<table id="list"><thead><tr><th>代碼</th><th>名稱</th><th>現價</th><th>漲幅</th></tr></thead><tbody></tbody></table>
+
+<script>
+// 測試資料
+const stocks = [
+  {code:"2401",name:"凌陽",price:142.8,prev:139.5},
+  {code:"3601",name:"智晶半導體",price:78.68,prev:76.9},
+  {code:"2330",name:"台積電",price:2270,prev:2220},
+  {code:"3030",name:"德律",price:68.5,prev:67.8}
+];
+
+function render() {
+  let html = '';
+  stocks.forEach(s => {
+    const chg = ((s.price - s.prev)/s.prev*100).toFixed(2);
+    html += `<tr><td>${s.code}</td><td>${s.name}</td><td>${s.price}</td><td class="${chg>0?'up':'down'}">${chg>0?'▲':''}${chg}%</td></tr>`;
+  });
+  document.querySelector('#list tbody').innerHTML = html;
+}
+render();
+
+document.getElementById('search').addEventListener('input', e => {
+  const q = e.target.value.toUpperCase();
+  // 簡易過濾
+  const filtered = stocks.filter(s => s.code.includes(q) || s.name.includes(q));
+  // 這裡可再擴充...
+  render();
+});
+</script>
 </body>
 </html>
